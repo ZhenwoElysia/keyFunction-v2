@@ -22,3 +22,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+contextBridge.exposeInMainWorld('fileApi',{
+  saveData:async(content:string)=>ipcRenderer.invoke('saveData',content),
+  readData:async()=>ipcRenderer.invoke('readData')
+})

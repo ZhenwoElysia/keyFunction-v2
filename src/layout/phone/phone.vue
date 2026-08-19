@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useKeyboardStore } from '../store/useKeyboardStore';
-import { usePhoneStore } from '../store/usePhoneStore';
-import keyChunk from '../components/keyChunk.vue';
+import { useKeyboardStore } from '../../store/useKeyboardStore.ts';
+import { usePhoneStore } from '../../store/usePhoneStore.ts';
+import keyChunk from '../../components/keyChunk.vue';
 import { storeToRefs } from 'pinia';
+import { readAllData, saveAllData } from '../../hook/dataOperation.ts';
 
 
 const keyboardStore = useKeyboardStore()
@@ -43,10 +44,10 @@ const handleLeftClick = () => {
   isShowMenu.value = false
 }
 const handleClick_turn = () => {
-
   turnKey()
   turnPhone()
   // 关闭菜单
+
   isShowMenu.value = false
 }
 </script>
@@ -58,14 +59,14 @@ const handleClick_turn = () => {
     top: `${phoneConfig.phonePosY * 100}%`,
     width: `${phoneConfig.dx}px`,
     height: `${phoneConfig.dy}px`,
-    backgroundColor: `rgb(${phoneConfig.bgcColor})`
+    backgroundColor: `rgba(${phoneConfig.bgcColor})`
   }">
-    <keyChunk v-for="keyConfig in keyConfigs" :config="keyConfig" :key="keyConfig.id"></keyChunk>
+    <keyChunk v-for="keyConfig in keyConfigs" :keyId="keyConfig.id" :key="keyConfig.id"></keyChunk>
   </div>
   <div class="contextmenu" v-if="isShowMenu" :style="{ left: `${menuX}px`, top: `${menuY}px` }">
     <div class="menu-item" @click="handleClick_turn()">旋转</div>
     <div class="menu-item">test</div>
-    <div class="menu-item">菜单项3</div>
+    <div class="menu-item" @click="isShowMenu = false">关闭</div>
   </div>
 </template>
 

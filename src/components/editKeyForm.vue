@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useKeyboardStore } from '../store/useKeyboardStore'
+import { keyConfig } from '../type/keyboards/keyboard'
 const keyboardStore = useKeyboardStore()
-const addKey = keyboardStore.addKey
+const editCertainKey = keyboardStore.editCertainKey
 const emit = defineEmits(['close'])
 const selfDestroy = () => {
   emit('close')
 }
+
+const { config } = defineProps<{ config: keyConfig }>()
+const inputInfo = ref({ ...config })
+console.log(inputInfo.value);
 
 const cancelHandle = (e: MouseEvent) => {
   if (e.target === e.currentTarget)
@@ -32,11 +37,11 @@ const verifyInput = (): boolean => {
   return true
 }
 
-const confirmAddHandle = () => {
+const confirmEditKey = () => {
 
   if (!verifyInput())
     return
-  addKey(inputInfo.value)
+  editCertainKey(inputInfo.value)
   //最后关闭
   selfDestroy()
 }
@@ -55,23 +60,7 @@ const getClickKey = () => {
 }
 
 
-let keyCode = ref(-1)
-let keyName = ref('null')
-let debounce = ref(0)
-let x = ref(-1)
-let y = ref(-1)
-let width = ref(-1)
-let height = ref(-1)
 
-const inputInfo = ref({
-  keyCode: keyCode.value,
-  keyName: keyName.value,
-  debounce: debounce.value,
-  x: x.value,
-  y: y.value,
-  width: width.value,
-  height: height.value,
-})
 </script>
 
 <template>
@@ -80,7 +69,7 @@ const inputInfo = ref({
     <!--弹窗主体-->
     <div class="modal-wrap">
       <div class="modal-header">
-        <span>新增按键配置</span>
+        <span>更改按键配置</span>
         <div class="close-btn" @click="cancelHandle">×</div>
       </div>
       <div class="modal-body">
@@ -114,7 +103,7 @@ const inputInfo = ref({
       </div>
       <div class="modal-footer">
         <div class="btn cancel" @click="cancelHandle">取消</div>
-        <div class="btn confirm" @click="confirmAddHandle">确认新增</div>
+        <div class="btn confirm" @click="confirmEditKey">修改</div>
       </div>
     </div>
   </div>

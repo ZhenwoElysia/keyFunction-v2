@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from "electron";
+import { app, ipcMain, BrowserWindow } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { stat, mkdir, appendFile, writeFile, readFile } from "node:fs/promises";
 createRequire(import.meta.url);
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
@@ -10,10 +11,37 @@ const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
+const DATA_PATH = path.join(app.getPath("userData"), "data", "config.json");
+ipcMain.handle("saveData", async (_event, content) => {
+  try {
+    await stat(DATA_PATH);
+  } catch (err) {
+    try {
+      await mkdir(path.join(app.getPath("userData"), "data"));
+      await appendFile(DATA_PATH, "");
+    } catch (error) {
+      console.error(error);
+    }
+    console.error(err);
+  }
+  try {
+    await writeFile(DATA_PATH, content, "utf-8");
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+});
+ipcMain.handle("readData", async () => {
+  const buffer = await readFile(DATA_PATH, { encoding: "utf-8" });
+  const strings = buffer.toString();
+  const config = JSON.parse(strings);
+  return config;
+});
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
+      contextIsolation: true,
       preload: path.join(__dirname$1, "preload.mjs")
     }
   });

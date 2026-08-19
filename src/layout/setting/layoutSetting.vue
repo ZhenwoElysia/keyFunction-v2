@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import phone from '../../phone/phone.vue';
+import phone from '../phone/phone.vue';
 import addKeyForm from '../../components/addKeyForm.vue';
 import { ref } from 'vue'
 import { useKeyboardStore } from '../../store/useKeyboardStore';
 import type { keyConfig } from '../../type/keyboards/keyboard';
 import { storeToRefs } from 'pinia';
-
+import { usePhoneStore } from '../../store/usePhoneStore.ts';
 
 
 const keyboardStore = useKeyboardStore()
 let { keyConfigs } = storeToRefs(keyboardStore)
-const { subKey, saveKey } = keyboardStore
+const { subKey, saveKey, resetKey, editCertainKey } = keyboardStore
+const phoneStore = usePhoneStore()
+const { resetPhone } = phoneStore
 
 const pushingKey = ref(false)
 
@@ -25,15 +27,26 @@ const handleDelete = (id: number) => {
   currentKeyConfig.value = null
   keyConfigs.value = keyboardStore.keyConfigs
 }
-const handleChange = (id: number) => {
-}
 
 const saveKeyData = async () => {
+
   try {
     saveKey()
   } catch (error) {
-
   }
+
+}
+
+const haldleEditKey = (certainKey: keyConfig) => {
+  alert('该功能还在维护，请直接删除按键并重新添加按键完成功能即可')
+  editCertainKey(certainKey)
+}
+
+const handleReset = () => {
+  alert(`重置:
+      为避免误操作，重置并不会同时保存，如需保存，请手动保存`)
+  resetKey()
+  resetPhone()
 }
 </script>
 
@@ -108,7 +121,7 @@ const saveKeyData = async () => {
             </tr>
             <tr>
               <td @click="handleDelete(currentKeyConfig.id)" class="deleteKey">删除</td>
-              <td @click="handleChange(currentKeyConfig.id)" class="changeKey">修改</td>
+              <td @click="haldleEditKey(currentKeyConfig)" class="changeKey">修改</td>
             </tr>
           </table>
         </div>
@@ -116,7 +129,7 @@ const saveKeyData = async () => {
 
       <!-- 按钮，重置与保存，固定在configSettings可视区域最底下 -->
       <div class="bottomBtn">
-        <div>重置</div>
+        <div @click="handleReset">重置</div>
         <div @click="saveKeyData">保存</div>
       </div>
     </div>

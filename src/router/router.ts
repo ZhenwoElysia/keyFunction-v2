@@ -25,7 +25,6 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
-  // Electron 必须使用 createWebHashHistory，createWebHistory 在electron会白屏
   history: createWebHashHistory(),
   routes
 })

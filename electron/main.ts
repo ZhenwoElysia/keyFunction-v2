@@ -1,20 +1,13 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow,ipcMain  } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { writeFile,stat,mkdir, appendFile,readFile } from 'node:fs/promises'
+import { configs } from '../src/type/type'
 
+//@ts-ignore
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(__dirname, '..')
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -26,10 +19,45 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 
+//注册事件，写入ipc
+const DATA_PATH = path.join(app.getPath('userData'),'data','config.json')
+ipcMain.handle('saveData',async (_event,content:string)=>{
+  //如果不存在，创建目录和空文件
+  try {
+    await stat(DATA_PATH)
+  } catch (err) {
+    try {
+      await mkdir(path.join(app.getPath('userData'),'data'))
+      await appendFile(DATA_PATH,'')
+    } catch (error) {
+      console.error(error)
+    }
+    console.error(err)
+  }
+  try {
+    await writeFile(DATA_PATH, content, 'utf-8')
+    return { success: true }
+  } catch (err) {
+    return { success: false, message: (err as Error).message }
+  }
+})
+
+//读取data数据
+ipcMain.handle('readData',async ():Promise<configs>=>{
+  const buffer = await readFile(DATA_PATH,{encoding:'utf-8'})
+  const strings = buffer.toString()
+  const config = JSON.parse(strings)
+  return config
+})
+
+
+
+
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
+      contextIsolation: true,
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })

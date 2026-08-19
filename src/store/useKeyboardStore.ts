@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import demoKeyConfig from '../type/keyboards/default'
-import { addKeyInfo, keyConfig } from '../type/keyboards/keyboard'
+import { addKeyInfo, keyConfig, keyConfigList } from '../type/keyboards/keyboard'
+import {readAllData, saveAllData} from '../hook/dataOperation'
 export const useKeyboardStore = defineStore('keyObj', () => {
-  // 状态
+  // 配置
   const keyConfigs = ref<keyConfig[]>(demoKeyConfig)
-
-
-
+  
   // 删除key，接收id
   const subKey = (id: number) => {
-    keyConfigs.value = keyConfigs.value.filter(item => item.id !== id)
+    keyConfigs.value = keyConfigs.value.filter(key => key.id !== id)
+    saveAllData()
   }
   //新加key
   const addKey=(addKeyInfo:addKeyInfo)=>{
@@ -29,47 +29,70 @@ export const useKeyboardStore = defineStore('keyObj', () => {
       }
     }
     //生成随机颜色
-    const  keyBoxColor:[number,number,number,] = [Math.random()*256,Math.random()*256,Math.random()*256]
+    const  keyBoxColor:[number,number,number,] = [Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256)]
+    //默认为true
     const  enabled = true
-
     const fanalAddKeyInfo:keyConfig = {
       id,
       ...addKeyInfo,
       keyBoxColor,
       enabled
     }
-
     keyConfigs.value.push(fanalAddKeyInfo)
+    saveAllData()
   }
 
   const turnKey=()=>{
     for (let i = 0; i < keyConfigs.value.length; i++) {
-      const keyConfig = keyConfigs.value[i];
-      // console.log('===========');
-      // console.log(i+':');
-      // console.log(keyConfig.x,keyConfig.y);
-
-
-      const temp1 = keyConfig.x
-      keyConfig.x=keyConfig.y
-      keyConfig.y=temp1
-
-      const temp2 = keyConfig.width
-      keyConfig.width = keyConfig.height
-      keyConfig.height=temp2
-
+      [keyConfigs.value[i].x,keyConfigs.value[i].y]=[keyConfigs.value[i].y,keyConfigs.value[i].x];
+      [keyConfigs.value[i].width,keyConfigs.value[i].height]=[keyConfigs.value[i].height,keyConfigs.value[i].width]
     }
   }
+
   const saveKey=async ()=>{
-    const fullPath = await window.fileOperation.getConfigFullPath('keyConfig.json')
-    const jsonStr = JSON.stringify(keyConfigs.value,null,2)
-    await window.fileOperation.writeFile(fullPath, jsonStr)
+    saveAllData()
   }
+
+  const readKey = async ()=>{
+    const {keyConfig}= await readAllData()
+    keyConfigs.value = keyConfig
+    return keyConfig
+  }
+  //重置
+  const resetKey =()=>{
+
+    keyConfigs.value = demoKeyConfig
+  }
+//初始化
+  const initialize = async ():Promise<keyConfigList>=>{
+    try {
+      const initializeValue = await readKey()
+      console.log('===key初始获取数据成功===');
+      return initializeValue
+    } catch (error) {
+      console.log('====key初始获取数据失败，可能是未保存过数据，使用默认数据===');
+      console.error(error)
+      return demoKeyConfig
+    }
+  }
+  initialize().then(res=>{
+    console.log('===keyConfigs初始化成功===');
+    keyConfigs.value=res
+  })
+
+
+  //修改(让用户自己删除新建即可)
+  const editCertainKey=(_key:addKeyInfo)=>{
+  }
+
   return {
     keyConfigs,
     subKey,
     addKey,
     turnKey,
-    saveKey
+    saveKey,
+    readKey,
+    resetKey,
+    editCertainKey
   }
 })
